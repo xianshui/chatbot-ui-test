@@ -352,7 +352,6 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   }, [messagesEndRef]);
 
   useEffect(() => {
-    console.log('>>loading', loading, selectedConversation);
     const endTime = Date.now() / 1000;
     const duration = endTime - startTime;
     setTtft(duration);
@@ -527,7 +526,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
               setCurrentMessage(message);
-              console.log('>>send');
+
               setStartTime(Date.now() / 1000);
               handleSend(message, 0, plugin);
             }}
