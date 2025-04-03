@@ -64,6 +64,9 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
+  const [ttft, setTtft] = useState<number>(0);
+  const [tps, setTps] = useState<number>(0);
+  const [startTime, setStartTime] = useState<number>(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -348,6 +351,20 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     };
   }, [messagesEndRef]);
 
+  useEffect(() => {
+    console.log('>>loading', loading, selectedConversation);
+    const endTime = Date.now() / 1000;
+    const duration = endTime - startTime;
+    setTtft(duration);
+    const lastMessage =
+      selectedConversation?.messages[selectedConversation.messages.length - 1];
+
+    if (lastMessage) {
+      // just treat one character as one token for calculating now, calculating method need refine
+      setTps(lastMessage.content.length / duration);
+    }
+  }, [loading]);
+
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
@@ -453,6 +470,10 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                 <div className="sticky top-0 z-10 flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
                   {t('Model')}: {selectedConversation?.model?.name} |{' '}
                   {t('Temp')}: {selectedConversation?.temperature} |
+                  {!loading && ttft !== 0 && ` TTFT: ${ttft.toFixed(2)} s |`}
+                  {!loading &&
+                    tps !== 0 &&
+                    ` TPS: ${tps.toFixed(2)} tokens/s |`}
                   <button
                     className="ml-2 cursor-pointer hover:opacity-50"
                     onClick={handleSettings}
@@ -482,6 +503,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                     onEdit={(editedMessage) => {
                       setCurrentMessage(editedMessage);
                       // discard edited message and the ones that come after then resend
+
                       handleSend(
                         editedMessage,
                         selectedConversation?.messages.length - index,
@@ -505,6 +527,8 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
               setCurrentMessage(message);
+              console.log('>>send');
+              setStartTime(Date.now() / 1000);
               handleSend(message, 0, plugin);
             }}
             onScrollDownClick={handleScrollDown}
